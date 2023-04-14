@@ -26,22 +26,27 @@
       in
       with pkgs;
       {
-        defaultPackage = naersk-lib.buildPackage {
-          src = ./.;
-          doCheck = true;
-          pname = "rust-nix-test";
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          buildInputs = with pkgs; [
-            xorg.libxcb
-          ];
-          postInstall = ''
-            wrapProgram "$out/bin/rust-nix-test" --prefix LD_LIBRARY_PATH : "${libPath}"
-          '';
+        packages = {
+          rust-nix-test = naersk-lib.buildPackage {
+            src = ./.;
+            doCheck = true;
+            pname = "rust-nix-test";
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            buildInputs = with pkgs; [
+              xorg.libxcb
+            ];
+            postInstall = ''
+              wrapProgram "$out/bin/rust-nix-test" --prefix LD_LIBRARY_PATH : "${libPath}"
+            '';
+          };
+
+          default = self.packages."${system}".rust-nix-test;
         };
 
-
-        defaultApp = flake-utils.lib.mkApp {
-          drv = self.defaultPackage."${system}";
+        apps = {
+          default = flake-utils.lib.mkApp {
+            drv = self.packages."${system}".default;
+          };
         };
 
         devShells.default = mkShell {
